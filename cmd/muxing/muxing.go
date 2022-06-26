@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -21,10 +22,52 @@ main function reads host/port from env just for an example, flavor it following 
 func Start(host string, port int) {
 	router := mux.NewRouter()
 
+	router.HandleFunc("/name/{PARAM}", handleName).Methods(http.MethodGet)
+	router.HandleFunc("/bad", handleBad).Methods(http.MethodGet)
+	router.HandleFunc("/data", handleData).Methods(http.MethodPost)
+	router.HandleFunc("/headers", handleHeaders).Methods(http.MethodPost)
+
 	log.Println(fmt.Printf("Starting API server on %s:%d\n", host, port))
 	if err := http.ListenAndServe(fmt.Sprintf("%s:%d", host, port), router); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func handleName(w http.ResponseWriter, r *http.Request) {
+	param := mux.Vars(r)["PARAM"]
+	fmt.Fprintf(w, "Hello, %s!", param)
+}
+
+func handleBad(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusInternalServerError)
+}
+
+func handleData(w http.ResponseWriter, r *http.Request) {
+	d, err := io.ReadAll(r.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	fmt.Fprintf(w, "I got message:\n%s", string(d))
+}
+
+func handleHeaders(w http.ResponseWriter, r *http.Request) {
+	v1 := r.Header.Get("a")
+	v2 := r.Header.Get("b")
+
+	i1, err := strconv.Atoi(v1)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	i2, err := strconv.Atoi(v2)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Add("a+b", strconv.Itoa(i1+i2))
 }
 
 //main /** starts program, gets HOST:PORT param and calls Start func.

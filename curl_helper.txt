@@ -1,0 +1,6 @@
+
+curl -H "Content-Type: application/json" -X POST http://localhost:8081/data	-d "PARAM"
+
+curl -H "Content-Type: application/json" -X POST http://localhost:8081/headers -d "Headers{\"a\":\"2\", \"b\":\"3\"}"
+
+curl http://localhost:8081/headers -H "Content-Type: application/json" -H "a: 2" -H "b: 3" -d "my message"
